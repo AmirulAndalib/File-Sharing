@@ -26,40 +26,44 @@ xbot = Client('File-Sharing', api_id=APP_ID, api_hash=API_HASH, bot_token=BOT_TO
 @xbot.on_message(filters.command('start') & filters.private)
 async def _startfile(bot, update):
     if update.text == '/start':
-        await update.reply_text(f"I'm File-Sharing!\nYou can share any telegram files and get the sharing link using this bot!\n\n/help for more details...", True, reply_markup=InlineKeyboardMarkup(START_BUTTONS))
+        await update.reply_text(
+            "I'm File-Sharing!\nYou can share any telegram files and get the sharing link using this bot!\n\n/help for more details...",
+            True,
+            reply_markup=InlineKeyboardMarkup(START_BUTTONS),
+        )
+
         return
     up = await bot.get_messages(update.from_user.id, update.message_id)
     if len(update.command) != 2:
         return
     code = update.command[1]
-    if '-' in code:
-        unique_id, msg_id = code.split('-')
-        if not msg_id.isdigit():
-            return
-        check = await bot.get_messages(TRACK_CHANNEL, int(msg_id))
-        if check.empty:
-            return
-        if check.video:
-            unique_idx = check.video.file_unique_id
-        elif check.photo:
-            unique_idx = check.photo.file_unique_id
-        elif check.audio:
-            unique_idx = check.audio.file_unique_id
-        elif check.document:
-            unique_idx = check.document.file_unique_id
-        elif check.sticker:
-            unique_idx = check.sticker.file_unique_id
-        elif check.animation:
-            unique_idx = check.animation.file_unique_id
-        elif check.voice:
-            unique_idx = check.voice.file_unique_id
-        elif check.video_note:
-            unique_idx = check.video_note.file_unique_id
-        if unique_id != unique_idx.lower():
-            return
-        await check.copy(update.from_user.id)   
-    else:
+    if '-' not in code:
         return
+    unique_id, msg_id = code.split('-')
+    if not msg_id.isdigit():
+        return
+    check = await bot.get_messages(TRACK_CHANNEL, int(msg_id))
+    if check.empty:
+        return
+    if check.video:
+        unique_idx = check.video.file_unique_id
+    elif check.photo:
+        unique_idx = check.photo.file_unique_id
+    elif check.audio:
+        unique_idx = check.audio.file_unique_id
+    elif check.document:
+        unique_idx = check.document.file_unique_id
+    elif check.sticker:
+        unique_idx = check.sticker.file_unique_id
+    elif check.animation:
+        unique_idx = check.animation.file_unique_id
+    elif check.voice:
+        unique_idx = check.voice.file_unique_id
+    elif check.video_note:
+        unique_idx = check.video_note.file_unique_id
+    if unique_id != unique_idx.lower():
+        return
+    await check.copy(update.from_user.id)
 
 
 # Help msg
@@ -71,11 +75,7 @@ async def _help(bot, update):
 # Store file
 @xbot.on_message(filters.media & filters.private)
 async def _main(bot, update):
-    if OWNER_ID == 'all':
-        pass
-    elif int(OWNER_ID) == update.from_user.id:
-        pass
-    else:
+    if OWNER_ID != 'all' and int(OWNER_ID) != update.from_user.id:
         return
     copied = await update.copy(TRACK_CHANNEL)
     if copied.video:
@@ -107,11 +107,18 @@ async def _main(bot, update):
         return
     me = await bot.get_me()
     await update.reply_text(
-        'Here is Your Sharing Link:', 
+        'Here is Your Sharing Link:',
         True,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton('Sharing Link', url=f'https://t.me/{me.username}?start={unique_idx.lower()}-{str(msg_id)}')]
-        ]) 
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        'Sharing Link',
+                        url=f'https://t.me/{me.username}?start={unique_idx.lower()}-{msg_id}',
+                    )
+                ]
+            ]
+        ),
     )
 
 
